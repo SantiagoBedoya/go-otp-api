@@ -33,7 +33,7 @@ func (s *AuthService) SignIn(data *dto.SignInDto) (string, error) {
 	if err != nil {
 		return "", ErrInvalidPassword
 	}
-	token, err := s.generateAccessToken(fmt.Sprint(user.ID))
+	token, err := s.GenerateAccessToken(fmt.Sprint(user.ID))
 	if err != nil {
 		return "", err
 	}
@@ -75,14 +75,14 @@ func (s *AuthService) Validate2FA(userID string, data *dto.OTPDto) (string, erro
 	if err := s.SetUser2FAValid(userID); err != nil {
 		return "", err
 	}
-	token, err := s.generateAccessToken(userID)
+	token, err := s.GenerateAccessToken(userID)
 	if err != nil {
 		return "", err
 	}
 	return token, nil
 }
 
-func (s *AuthService) generateAccessToken(userID string) (string, error) {
+func (s *AuthService) GenerateAccessToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "otp-api",
 		Subject:   fmt.Sprint(userID),

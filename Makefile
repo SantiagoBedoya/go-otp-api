@@ -8,7 +8,7 @@ test:
 
 test-coverage:
 	go test -covermode=count -coverprofile coverage.out ./...
-	go tool cover -func=coverage
+	go tool cover -func=coverage.out
 
 migrate-up:
 	migrate -database "mysql://root:root@tcp(localhost:3306)/otp_go" -path migrations up
