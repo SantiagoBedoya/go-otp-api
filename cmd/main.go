@@ -30,5 +30,7 @@ func main() {
 	route.InitializeUserRoutes(router, db)
 	route.InitializeAuthRoutes(router, db)
 
-	router.Run(":8080")
+	if err := router.Run(":8080"); err != nil {
+		panic(err)
+	}
 }

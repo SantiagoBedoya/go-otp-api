@@ -1,0 +1,42 @@
+linters-settings:
+  gosimple:
+    enabled: true
+  staticcheck:
+    enabled: true
+  unused:
+    enabled: true
+  govet:
+    enabled: true
+  errcheck:
+    enabled: true
+  ineffassign:
+    enabled: true
+  deadcode:
+    enabled: true
+  gosec:
+    enabled: true
+  golint:
+    enabled: true
+  gofmt:
+    enabled: true
+  misspell:
+    enabled: true
+  unconvert:
+    enabled: true
+  unparam:
+    enabled: true
+
+linters:
+  enable-all: true
+  disable:
+    - whitespace
+    - goconst
+    - maligned
+
+run:
+  paths:
+    - ./...
+
+exclude-use-default: false
+
+issues-exit-code: 1

@@ -96,10 +96,16 @@ func (h *AuthHandler) Generate(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	png.Encode(&buf, img)
+	if err := png.Encode(&buf, img); err != nil {
+		log.Printf("Error decode qr code image: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
+		return
+	}
 
 	ctx.Header("Content-Type", "image/png")
-	ctx.Writer.Write(buf.Bytes())
+	_, _ = ctx.Writer.Write(buf.Bytes())
 }
 
 func (h *AuthHandler) SignIn(ctx *gin.Context) {
