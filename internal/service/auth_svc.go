@@ -1,13 +1,16 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
+	"image/png"
 	"os"
 	"time"
 
 	"github.com/SantiagoBedoya/otp-api/internal/dto"
 	"github.com/SantiagoBedoya/otp-api/internal/model"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,9 +33,59 @@ func (s *AuthService) SignIn(data *dto.SignInDto) (string, error) {
 	if err != nil {
 		return "", ErrInvalidPassword
 	}
+	token, err := s.generateAccessToken(fmt.Sprint(user.ID))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+func (s *AuthService) Setup2FA(userID, email string) ([]byte, error) {
+	key, err := totp.Generate(totp.GenerateOpts{
+		AccountName: email,
+		Issuer:      "otp-api",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.SetUser2FA(userID, key.Secret()); err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	img, err := key.Image(200, 200)
+	if err != nil {
+		return nil, err
+	}
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (s *AuthService) Validate2FA(userID string, data *dto.OTPDto) (string, error) {
+	user, err := s.GetUserByID(userID)
+	if err != nil {
+		return "", err
+	}
+	isValid := totp.Validate(data.Code, user.Secret2FA)
+	if !isValid {
+		return "", ErrInvalidPasscode
+	}
+	if err := s.SetUser2FAValid(userID); err != nil {
+		return "", err
+	}
+	token, err := s.generateAccessToken(userID)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+func (s *AuthService) generateAccessToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "otp-api",
-		Subject:   fmt.Sprint(user.ID),
+		Subject:   fmt.Sprint(userID),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
